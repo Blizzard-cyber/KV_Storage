@@ -72,11 +72,13 @@ int main() {
     ofstream file(FILE_PATH, ios::out | ios::binary);
     file.close();
 
-    //KV
+    
 
     //定义文件信息块
     FileInfo fileInfo(FILE_PATH);
     globalFileInfo = &fileInfo;
+    //从文件中读取文件信息块（第0块）
+    fileInfo.readFromBlock0();
 
     //定义写缓冲区
     Cache writeCache(FILE_PATH);
@@ -84,13 +86,6 @@ int main() {
     // //定义读缓冲区
     Cache readCache(FILE_PATH);
     
-    fileInfo.printInfo();
-
-    //从文件中读取文件信息块（第0块）
-    fileInfo.readFromBlock0();
-    // if(!fileInfo.readFromBlock0()) {
-    //     return 1;
-    // }
 
 
 
@@ -106,6 +101,7 @@ int main() {
     while (1) {
         
         getline(cin, line);
+        cout <<"command:"<<line<<endl;
         istringstream iss(line);
         iss >> command;
 

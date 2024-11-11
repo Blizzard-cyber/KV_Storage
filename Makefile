@@ -22,7 +22,7 @@ $(TARGET):
 
 # 测试
 test:
-	$(CXX)  -o test test.cpp 
+	$(CXX) -std=c++11 -o test test.cpp proto/info.pb.cc $(LDFLAGS)
 # 清理生成的文件
 clean:
-	rm -f $(TARGET)  test
+	rm -f $(TARGET)  test dumpFile

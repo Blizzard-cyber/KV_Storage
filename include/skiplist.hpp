@@ -177,11 +177,27 @@ public:
 
         size_t listSize = 0;
         while(getline(file_reader,line)){
-            int key = stoi(line.substr(0,line.find(":")));
-            string value = line.substr(line.find(":")+1);
+            //cout << "line: " << line << endl;
+            //捕获stoi异常
+            try {
+                int key = stoi(line.substr(0, line.find(":")));
+                cout << "Key: " << key << endl;
+
+                string value = line.substr(line.find(":")+1);
             
-            //顺序插入并每次返回最后一个节点的指针
-            listSize += add(key,value,1);
+                //顺序插入并每次返回最后一个节点的指针
+                listSize += add(key,value,1);
+            } 
+            catch (const invalid_argument& e) {
+                cout << "line: " << line << endl;
+                cerr << "Invalid argument: " << e.what() << endl;
+            } 
+            catch (const out_of_range& e) {
+                cout << "line: " << line << endl;
+                cerr << "Out of range: " << e.what() << endl;
+            }
+            //int key = stoi(line.substr(0,line.find(":")));
+            
 
             
         }

@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include "./include/skiplist.hpp"
+#include "./include/fileInfo.hpp"
 
 using namespace std;
 
@@ -10,15 +11,12 @@ using namespace std;
 
 int main() {
     
-    Skiplist sl;
-    //生成大量随机数据
-    for(int i = 0; i < 100; i++) {
-        sl.add(rand(), to_string(rand()));
-    }
-    sl.slprint();
-    
-    //清空缓冲区
-    sl.~Skiplist();
+    FileInfo fileInfo("dumpFile");
+    //fileInfo.printInfo();
+
+    //读取磁盘
+    fileInfo.readFromBlock0();
+
 
     return 0;
 }

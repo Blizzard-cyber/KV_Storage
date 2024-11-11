@@ -73,6 +73,12 @@ public:
             if(flag){
                 //删除key与块号的map关系
                 fileInfo.delKeyBlockMapping(key);
+
+                //更新对应块的剩余空间信息
+                fileInfo.updateBlockInfo(fileInfo.getBlockNumber(key),nodeSize);
+
+                //清空读缓冲区
+                RWcache.~Skiplist();
             }
             return true;
         }
@@ -123,6 +129,9 @@ private:
 
         //更新块的剩余空间信息
         fileInfo.updateBlockInfo(freeBlock, freeSpace);
+
+        //打印文件信息
+        fileInfo.printInfo();
 
         //清空缓冲区
         RWcache.~Skiplist();
