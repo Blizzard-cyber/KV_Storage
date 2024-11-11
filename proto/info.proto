@@ -1,0 +1,29 @@
+syntax = "proto3";
+package proto;
+
+option optimize_for = LITE_RUNTIME;
+
+// 定义 SuperBlock 消息
+message SuperBlock {
+    string fileName = 1;  // 文件名
+    uint64 fileSize = 2;  // 文件大小
+    uint64 blockSize = 3; // 块大小
+    int32 blockNum = 4;   // 块数
+    string createTime = 5; // 创建时间
+}
+
+// 定义 BlockIndexTable 消息
+message BlockIndexTable {
+    uint64 blockNumber = 1;  // 块号
+    uint64 offset = 2;       // 偏移量
+    uint64 freeSpace = 3;    // 剩余空间
+}
+
+
+// 定义 FileInfo 消息
+message FileInfo {
+    SuperBlock superBlock = 1;  // 超级块
+    repeated BlockIndexTable blockIndexTables = 2; // 块索引表
+    map<int32, uint64> keyBlockMap = 3; // 键到块号的映射
+    repeated bool blockUsageTable = 4; // 块使用情况表
+}
