@@ -69,10 +69,14 @@ int main() {
 
    
     //创建一个文件
-    ofstream file(FILE_PATH, ios::out | ios::binary);
-    file.close();
+    // ofstream file(FILE_PATH, ios::out | ios::binary);
+    // file.close();
 
-    
+    //判断一个文件是否存在，不存在则创建
+    if(access(FILE_PATH, F_OK) == -1) {
+        ofstream file(FILE_PATH, ios::out | ios::binary);
+        file.close();
+    }
 
     //定义文件信息块
     FileInfo fileInfo(FILE_PATH);
@@ -122,7 +126,7 @@ int main() {
                 key = stoi(key_str);
                 if(writeCache.get(fileInfo, key, 0)==""){  //如果写缓冲区没有找到
                     if(readCache.get(fileInfo, key, 1)=="" ){  //如果读缓冲区也没有找到
-                        cout<<"[Main] Key not found!"<<endl;
+                        cout<<"[Main] Key: "<< key << "   not found!"<<endl;
                     }
                 }
             } else {
@@ -135,7 +139,7 @@ int main() {
                 key = stoi(key_str);
                 if(!writeCache.del(fileInfo, key, 0)){
                     if(!readCache.del(fileInfo, key, 1)){
-                        cout<<"[Main] Key not found!"<<endl;
+                       cout<<"[Main] Key: "<< key << "  not found!"<<endl;
                     }
 
                 }

@@ -25,14 +25,16 @@ public:
     void put(FileInfo& fileInfo,int key, const string& value) {
         //unique_lock<shared_mutex> lock(mutex);
         size_t nodesize = RWcache.add(key, value);  // 向SkipList中插入键值对
-        cout << "PUTsize: "<<nodesize<<endl;
+       
         if (currentSize + nodesize > CACHE_SIZE) {
             size_t freeSpace =CACHE_SIZE- currentSize;
             flushToDisk(fileInfo, FILENAME,freeSpace);  // 缓冲区满了，将数据写入磁盘
         }
         currentSize += nodesize;
-        cout << "[WRcache] Size:"<<currentSize  <<endl;
         cout << "[WRcache] PUT: Key = " << key << ", Value = " << value <<endl;
+        cout << "[WRcache] PUTsize: "<<nodesize<<endl;
+        cout << "[WRcache] TotalSize:"<<currentSize  <<endl;
+       
     }
 
     //flag为0表示查写缓冲，flag为1表示需要从磁盘读取
@@ -65,7 +67,7 @@ public:
         }
         size_t nodeSize =0;
         bool result = RWcache.erase(key,nodeSize); // 从SkipList中删除键值对
-        cout << "DELsize: "<<nodeSize<<endl;
+       
         if(result){
         //WRcache.slprint();
             cout << "[RWcache] DEL: Key = " << key <<endl;
@@ -86,6 +88,8 @@ public:
              cout << "[RWcache] DEL: Key: "<< key << "    not found." << endl;
              return false;
         }
+        cout << "[RWcache] DELsize: "<<nodeSize<<endl;
+        cout << "[RWcache] TotalSize:"<<currentSize  <<endl;
        
     }
     

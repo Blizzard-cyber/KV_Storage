@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 
-
+#include "../proto/sl.pb.h"
 
 using namespace std;
 
@@ -142,89 +142,184 @@ public:
        
     }
 
-    //跳表序列化到文件中
-    void serialize(const string& filename, size_t offset){
-        ofstream file_writer;
-        file_writer.open(filename);
-        if(!file_writer.is_open()){
-            cerr << "Failed to open file: " << filename << endl;
+    //序列化到文件中
+    void serialize(const string& filename, size_t offset) {
+        ofstream outFile(filename, ios::binary | ios::out );
+        if (!outFile.is_open()) {
+            cerr << "Failed to open file for writing: " << filename << endl;
             return;
         }
-        //从块的偏移量开始写入
-        file_writer.seekp(offset, ios::beg);
-        auto p = head;
-        while(p->next[0]){
-            file_writer << p->next[0]->key << ":" << p->next[0]->value << endl;
+
+        // 将文件指针移动到指定的偏移量位置
+        outFile.seekp(offset, ios::beg);
+
+        proto::Skiplist sl;
+        Node* p = head; //将头结点序列化，便于后续建立头结点的next指针
+        while (p) {
+            proto::Node* nodeProto = sl.add_nodes();
+            nodeProto->set_key(p->key);
+            nodeProto->set_value(p->value);
+            for (int i = 0; i < level; ++i) {
+                if (p->next[i]) {
+                    nodeProto->add_next(p->next[i]->key);
+                } else {
+                    nodeProto->add_next(-2); // -1表示头指针，-2表示空指针
+                }
+            }
             p = p->next[0];
         }
-        file_writer.flush();
-        file_writer.close();
+
+        if (!sl.SerializeToOstream(&outFile)) {
+            cerr << "Failed to serialize data." << endl;
+        }
+
+        outFile.close();
+    }
+
+    // 从文件中反序列化到跳表中
+    size_t deserialize(const string& filename, size_t offset) {
+        ifstream inFile(filename, ios::binary | ios::in);
+        if (!inFile.is_open()) {
+            cerr << "Failed to open file for reading: " << filename << endl;
+            return 0;
+        }
+
+        // 将文件指针移动到指定的偏移量位置
+        inFile.seekg(offset, ios::beg);
+
+       proto::Skiplist sl;
+        if (!sl.ParseFromIstream(&inFile)) {
+            cerr << "Failed to parse file: " << filename << endl;
+            return 0;
+        }
+
+        inFile.close();
+
+        // 清空当前跳表
+        
+        Node* p = head->next[0];
+        while (p) {
+            Node* nextNode = p->next[0];
+            delete p;
+            p = nextNode;
+        }
+        head->next.assign(level, nullptr);
+
+        // 反序列化数据并计算跳表所占空间
+        size_t totalSize = 0;
+        map<int, Node*> nodeMap;  //key和节点指针的映射
+        for (const auto& nodeProto : sl.nodes()) {
+            Node* node = new Node(nodeProto.key(), nodeProto.value());
+            nodeMap[nodeProto.key()] = node;
+            totalSize += sizeof(int) + nodeProto.value().capacity() + sizeof(Node*) * level;
+        }
+        for (const auto& nodeProto : sl.nodes()) {
+            Node* node = nodeMap[nodeProto.key()];           
+            for (int i = 0; i < nodeProto.next_size(); ++i) {
+                int nextKey = nodeProto.next(i);
+                if (nextKey != -2) {
+                    //头结点的next指针需要特殊处理
+                    if(nodeProto.key() == -1){
+                        head->next[i] = nodeMap[nextKey];
+                    }
+                    node->next[i] = nodeMap[nextKey];
+                   
+                }
+            }
+        }
+
+        // //连接头结点
+        // if (!sl.nodes().empty()) {
+        //     for(int i = 0; i < level; i++){
+        //         head->next[i] = nodeMap[sl.nodes(0).key()];
+        //     }
+           
+        // }
+
+        return totalSize;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //跳表序列化到文件中
+    // void serialize(const string& filename, size_t offset){
+    //     ofstream file_writer(filename, ios::out | ios::binary);
+    //     //file_writer.open(filename);
+    //     if(!file_writer.is_open()){
+    //         cerr << "Failed to open file: " << filename << endl;
+    //         return;
+    //     }
+    //     //从块的偏移量开始写入
+    //     file_writer.seekp(offset, ios::beg);
+    //     auto p = head;
+    //     while(p->next[0]){
+    //         file_writer << p->next[0]->key << ":" << p->next[0]->value << endl;
+    //         p = p->next[0];
+    //     }
+    //     file_writer.flush();
+    //     file_writer.close();
         
 
 
-    }
+    // }
 
     //从文件中反序列化到跳表中
-    size_t deserialize(const string& filename,size_t offset){
-        ifstream file_reader;
-        file_reader.open(filename);
-        if(!file_reader.is_open()){
-            cerr << "Failed to open file: " << filename << endl;
-            return -1;
-        }
-        file_reader.seekg(offset, ios::beg);
-        string line;
+    // size_t deserialize(const string& filename,size_t offset){
+    //     ifstream file_reader(filename, ios::in | ios::binary);
+    //     //file_reader.open(filename);
+    //     if(!file_reader.is_open()){
+    //         cerr << "Failed to open file: " << filename << endl;
+    //         return -1;
+    //     }
+    //     file_reader.seekg(offset, ios::beg);
+    //     string line;
 
-        size_t listSize = 0;
-        while(getline(file_reader,line)){
-            //cout << "line: " << line << endl;
-            //捕获stoi异常
-            try {
-                int key = stoi(line.substr(0, line.find(":")));
-                cout << "Key: " << key << endl;
+    //     size_t listSize = 0;
+    //     while(getline(file_reader,line)){
+    //         cout << "line: " << line << endl;
+    //         //捕获stoi异常
+    //         try {
+    //             int key = stoi(line.substr(0, line.find(":")));
+    //             cout << "Key: " << key << endl;
 
-                string value = line.substr(line.find(":")+1);
+    //             string value = line.substr(line.find(":")+1);
             
-                //顺序插入并每次返回最后一个节点的指针
-                listSize += add(key,value,1);
-            } 
-            catch (const invalid_argument& e) {
-                cout << "line: " << line << endl;
-                cerr << "Invalid argument: " << e.what() << endl;
-            } 
-            catch (const out_of_range& e) {
-                cout << "line: " << line << endl;
-                cerr << "Out of range: " << e.what() << endl;
-            }
-            //int key = stoi(line.substr(0,line.find(":")));
+    //             //顺序插入并每次返回最后一个节点的指针
+    //             listSize += add(key,value,1);
+    //         } 
+    //         catch (const invalid_argument& e) {
+    //             cout << "line: " << line << endl;
+    //             cerr << "Invalid argument: " << e.what() << endl;
+    //         } 
+    //         catch (const out_of_range& e) {
+    //             cout << "line: " << line << endl;
+    //             cerr << "Out of range: " << e.what() << endl;
+    //         }
+    //         //int key = stoi(line.substr(0,line.find(":")));
             
 
             
-        }
-        slprint();  
-        file_reader.close();
+    //     }
+    //     slprint();  
+    //     file_reader.close();
 
-        return listSize; 
-    }
+    //     return listSize; 
+    // }
 };
     
-
-// int main()
-// {
-//     Skiplist* obj = new Skiplist();
-//     //测试插入
-//     // for(int i = 0; i < 20; i++){
-//     //     obj->add(rand(),"sjhfg");
-//     // }
-
-//     //obj->slprint();
-//     //测试查找
-//     // string param_2 = obj->search(37);
-//     // printf("search(37) = %s\n",param_2.c_str());
-//     // //obj->slprint();
-//     // //测试删除
-//     // bool param_3 = obj->erase(5);
-//     // printf("erase(5) = %d\n",param_3);
-//     // //obj->slprint();
-//     return 0;
-// }

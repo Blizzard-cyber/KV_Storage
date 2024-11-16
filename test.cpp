@@ -3,7 +3,8 @@
 #include <map>
 #include <vector>
 #include "./include/skiplist.hpp"
-#include "./include/fileInfo.hpp"
+
+
 
 using namespace std;
 
@@ -11,11 +12,19 @@ using namespace std;
 
 int main() {
     
-    FileInfo fileInfo("dumpFile");
-    //fileInfo.printInfo();
+    Skiplist sl;
 
-    //读取磁盘
-    fileInfo.readFromBlock0();
+    for(int i = 0; i < 10; i++){
+        sl.add(rand(), "test");
+    }
+    sl.slprint();
+
+    sl.serialize("testFile", 1024);
+    sl.deserialize("testFile", 1024);
+
+    sl.slprint();
+
+    
 
 
     return 0;

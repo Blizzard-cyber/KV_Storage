@@ -136,15 +136,6 @@ public:
         blockIndexTable[blockNumber].freeSpace = freeSpace;
     }
 
-    //计算这个类中的数据结构所占的大小
-    size_t getSize() {
-        size_t size = 0;
-        size += sizeof(SuperBlock);
-        size += blockUsageTable.size() * sizeof(bool);
-        size += blockIndexTable.size() * sizeof(BlockIndexTable);
-        size += keyBlockMap.size() * (sizeof(int) + sizeof(size_t));
-        return size;
-    }
 
     //打印文件信息
     void printInfo(){
@@ -183,24 +174,24 @@ public:
 
     void testset() {
         //lock_guard<mutex> lock(mutex);
-       addKeyBlockMapping(1, 1);
+        addKeyBlockMapping(1, 1);
         addKeyBlockMapping(2, 2);
         addKeyBlockMapping(3, 3);
+        getFreeBlock();
+        
     }
 
     //将数据写入到磁盘文件的第一块中
     void writeToBlock0() {
         //lock_guard<mutex> lock(mutex);
-        ofstream file(superBlock.fileName, ios::out | ios::binary);
+        ofstream file(superBlock.fileName, ios::out | ios::binary| ios::trunc);
         if(!file.is_open()) {
             cout << "Failed to open file: " << superBlock.fileName << endl;
+            file.close();
             return;
         }
-        file.seekp(0, ios::beg);
+       file.seekp(0, ios::beg);
 
-        //计算第0块剩余的大小
-        size_t alloc = getSize();
-        blockIndexTable[0].freeSpace = BLOCK_SIZE - alloc;
         
        proto::FileInfo info;
 
@@ -221,12 +212,8 @@ public:
             proto::BlockIndexTable* blockIndex = info.add_blockindextables();
             blockIndex->set_blocknumber(blockIndexTable[i].blockNumber);
             blockIndex->set_offset(blockIndexTable[i].offset);
-            if(i == 0) {
-                //blockIndex->set_freespace(BLOCK_SIZE);
-            } 
-            else {
             blockIndex->set_freespace(blockIndexTable[i].freeSpace);
-            }
+            
         }
 
         //keyBlockMap
@@ -234,12 +221,19 @@ public:
             info.mutable_keyblockmap()->insert({it->first, it->second});
         }
 
-        //序列化为文件流
-        string str;
-        info.SerializeToString(&str);
-       
-        file.write(str.c_str(), str.size());
+        //更新第0块的的空闲空间
+        blockIndexTable[0].freeSpace = BLOCK_SIZE - info.ByteSizeLong();
+        proto::BlockIndexTable* blockIndex = info.mutable_blockindextables(0);
+        blockIndex->set_freespace(blockIndexTable[0].freeSpace);
+        
+        cout<<"[WirteBlock0] Info SIze :"<< info.ByteSizeLong() <<endl;
 
+        //序列化为文件流
+        if(!info.SerializeToOstream(&file)) {
+            cerr << "Failed to write to file: " << superBlock.fileName << endl;
+           
+        }
+        
         file.close();
         printInfo();
     }
@@ -254,39 +248,30 @@ public:
             return false;
         }
 
-        // 检查文件是否为空
-        // char c;
-        // file >> c;
-        // if (file.eof()) {
-        //     cerr << "File is empty: " << superBlock.fileName << endl;
-        //     file.close();
-        //     return false;
-        // }
 
-        // file.seekg(0, ios::end);
-        // if (file.tellg() == 0) {
-        //     cerr << "File is empty: " << superBlock.fileName << endl;
-        //     file.close();
-        //     return false;
-        // }
+        file.seekg(0, ios::end);
+        if (file.tellg() == 0) {
+            cerr << "File is empty: " << superBlock.fileName << endl;
+            file.close();
+            return false;
+         }
 
         file.seekg(0, ios::beg);
 
         proto::FileInfo info;
-       
-        string str((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-        if (str.empty()) {
-            cerr << "Failed to parse file: " << superBlock.fileName << endl;
-            return false;
-         }
 
-        info.ParseFromString(str);
-        //cout << "Parse file: " << str << endl;
+        //从文件流中解析
+        if(!info.ParseFromIstream(&file)) {
+            cerr << "Failed to parse file: " << superBlock.fileName << endl;
+            file.close();
+            return false;
+        }
+
         file.close();
 
         //superblock
         superBlock.fileName = info.superblock().filename();
-        cout << "File Name: " << info.superblock().filename() << endl;
+        
         superBlock.fileSize = info.superblock().filesize();
         superBlock.blockSize = info.superblock().blocksize();
         superBlock.blockNum = info.superblock().blocknum();
@@ -295,7 +280,7 @@ public:
         //blockUsageTable
         for(int i = 0; i < info.blockusagetable_size(); i++) {
             blockUsageTable[i] = info.blockusagetable(i);
-            cout << info.blockusagetable(i) << " ";
+            //cout << info.blockusagetable(i) << " ";
         }
 
         //blockIndexTable
@@ -328,9 +313,3 @@ private:
     
 };
 
-// int main() {
-//     FileInfo fileInfo;
-
-//     //将信息存入到文件的第一块中
-//     return 0;
-// }

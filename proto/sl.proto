@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+option optimize_for = LITE_RUNTIME;
+
+// 定义 Node 消息
+message Node {
+    int32 key = 1; // 节点key
+    string value = 2; // 节点value
+    repeated int32 next = 3; // 记录节点在每一层的 next，next[i] 表示当前节点第 i 层的 next
+}
+
+// 定义 Skiplist 消息
+message Skiplist {
+    repeated Node nodes = 1; // 跳表中的所有节点
+}
