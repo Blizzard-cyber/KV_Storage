@@ -25,15 +25,17 @@ public:
     void put(FileInfo& fileInfo,int key, const string& value) {
         //unique_lock<shared_mutex> lock(mutex);
         size_t nodesize = RWcache.add(key, value);  // 向SkipList中插入键值对
-       
-        if (currentSize + nodesize > CACHE_SIZE) {
-            size_t freeSpace =CACHE_SIZE- currentSize;
-            flushToDisk(fileInfo, FILENAME,freeSpace);  // 缓冲区满了，将数据写入磁盘
-        }
+
         currentSize += nodesize;
         cout << "[WRcache] PUT: Key = " << key << ", Value = " << value <<endl;
         cout << "[WRcache] PUTsize: "<<nodesize<<endl;
         cout << "[WRcache] TotalSize:"<<currentSize  <<endl;
+       
+        if (currentSize > CACHE_SIZE ) {
+            size_t freeSpace =CACHE_SIZE- currentSize + nodesize;
+            flushToDisk(fileInfo, FILENAME,freeSpace);  // 缓冲区满了，将数据写入磁盘
+        }
+        
        
     }
 
@@ -73,11 +75,10 @@ public:
             cout << "[RWcache] DEL: Key = " << key <<endl;
             currentSize -= nodeSize;
             if(flag){
-                //删除key与块号的map关系
-                fileInfo.delKeyBlockMapping(key);
+                
 
-                //更新对应块的剩余空间信息
-                fileInfo.updateBlockInfo(fileInfo.getBlockNumber(key),nodeSize);
+                //删除并更新对应块的剩余空间信息
+                fileInfo.updateBlockInfo(fileInfo.delKeyBlockMapping(key),nodeSize);
 
                 //清空读缓冲区
                 RWcache.~Skiplist();
@@ -139,6 +140,8 @@ private:
 
         //清空缓冲区
         RWcache.~Skiplist();
+
+        
         
         currentSize = 0;
     }

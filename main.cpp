@@ -5,9 +5,11 @@
 #include <sstream>
 #include <execinfo.h>
 #include <unistd.h>
+#include <thread>
 
 #include "./include/fileInfo.hpp"
 #include "./include/cache.hpp"
+#include "./include/tasks.hpp"
 
 //#include "./proto/info.pb.h"
 
@@ -26,12 +28,36 @@ void signalHandler(int signum) {
     
     if (globalFileInfo) {
         globalFileInfo->writeToBlock0();
-        std::cout << "Data written to block 0." << std::endl;
+       cout << "Data written to block 0." <<endl;
     }
     cout << endl;
     cout << "Interrupt signal (" << signum << ") received." << endl;
     cout << "Program terminated..." << endl;
     exit(signum);
+}
+
+void processPutRequests(TaskQueue& putQueue, FileInfo& fileInfo) {
+    while (true) {
+        Task task = putQueue.getTask();
+        fileInfo.addKeyBlockMapping(std::stoi(task.key),stoull(task.value));
+       cout << "Processed PUT request: key = " << task.key << ", value = " << task.value <<endl;
+    }
+}
+
+void processGetRequests(TaskQueue& getQueue, FileInfo& fileInfo) {
+    while (true) {
+        Task task = getQueue.getTask();
+        size_t blockNumber = fileInfo.getBlockNumber(std::stoi(task.key));
+       cout << "Processed GET request: key = " << task.key << ", block number = " << blockNumber <<endl;
+    }
+}
+
+void processDelRequests(TaskQueue& delQueue, FileInfo& fileInfo) {
+    while (true) {
+        Task task = delQueue.getTask();
+        // Implement the deletion logic if needed
+       cout << "Processed DEL request: key = " << task.key <<endl;
+    }
 }
 
 
@@ -84,13 +110,23 @@ int main() {
     //从文件中读取文件信息块（第0块）
     fileInfo.readFromBlock0();
 
+
     //定义写缓冲区
     Cache writeCache(FILE_PATH);
 
-    // //定义读缓冲区
+    //定义读缓冲区
     Cache readCache(FILE_PATH);
     
 
+    //定义任务队列
+    // TaskQueue putQueue;
+    // TaskQueue getQueue;
+    // TaskQueue delQueue;
+
+    // 启动处理请求的线程
+//    thread putThread(processPutRequests,ref(putQueue),ref(fileInfo));
+//    thread getThread(processGetRequests,ref(getQueue),ref(fileInfo));
+//    thread delThread(processDelRequests,ref(delQueue),ref(fileInfo));
 
 
     cout << "Program starting..." << endl;

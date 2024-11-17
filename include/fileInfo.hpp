@@ -90,14 +90,18 @@ public:
     }
 
     //删除key和block的映射
-    void delKeyBlockMapping(int key) {
+    size_t delKeyBlockMapping(int key) {
         //lock_guard<mutex> lock(mutex);
         if(keyBlockMap.find(key) == keyBlockMap.end()) {
             cout << "Key not found!" << endl;
-            return;
+            return -1;
         }
+        //将块号返回
+        size_t blockNumber = keyBlockMap[key];
         keyBlockMap.erase(key);
         blockIndexTable[0].freeSpace += (sizeof(int) + sizeof(size_t));
+
+        return blockNumber;
     }
 
     //获取空闲的block号并标记为已使用
@@ -184,13 +188,13 @@ public:
     //将数据写入到磁盘文件的第一块中
     void writeToBlock0() {
         //lock_guard<mutex> lock(mutex);
-        ofstream file(superBlock.fileName, ios::out | ios::binary| ios::trunc);
+        fstream file(superBlock.fileName, ios::out | ios::binary | ios::in);
         if(!file.is_open()) {
             cout << "Failed to open file: " << superBlock.fileName << endl;
             file.close();
             return;
         }
-       file.seekp(0, ios::beg);
+      
 
         
        proto::FileInfo info;
@@ -226,13 +230,30 @@ public:
         proto::BlockIndexTable* blockIndex = info.mutable_blockindextables(0);
         blockIndex->set_freespace(blockIndexTable[0].freeSpace);
         
-        cout<<"[WirteBlock0] Info SIze :"<< info.ByteSizeLong() <<endl;
+        // 获取序列化数据的大小
+        serializedSize = info.ByteSizeLong();
+        
 
-        //序列化为文件流
-        if(!info.SerializeToOstream(&file)) {
-            cerr << "Failed to write to file: " << superBlock.fileName << endl;
-           
+        // 检查数据大小是否超过指定的区域
+        if (serializedSize + sizeof(size_t) > BLOCK_SIZE) {
+            cerr << "Serialized data size exceeds the maximum allowed size." << endl;
+            return;
         }
+        cout<<"[WirteBlock0] Info SIze :"<< serializedSize <<endl;
+
+        
+        // 序列化数据到字节数组
+        vector<char> buffer(serializedSize);
+        if (!info.SerializeToArray(buffer.data(), serializedSize)) {
+            cerr << "Failed to serialize data." << endl;
+            return;
+        }
+        
+        file.seekp(0, ios::beg);
+        file.write(reinterpret_cast<const char*>(&serializedSize), sizeof(size_t));
+
+        file.seekp(sizeof(size_t), ios::beg);
+        file.write(buffer.data(), serializedSize);
         
         file.close();
         printInfo();
@@ -248,20 +269,24 @@ public:
             return false;
         }
 
+        //读取数据
+        file.seekg(0, ios::beg);
+        file.read(reinterpret_cast<char*>(&serializedSize), sizeof(size_t));
 
-        file.seekg(0, ios::end);
-        if (file.tellg() == 0) {
-            cerr << "File is empty: " << superBlock.fileName << endl;
+        file.seekg(sizeof(size_t), ios::beg);
+        vector<char> buffer(serializedSize);
+        file.read(buffer.data(), serializedSize);
+        streamsize bytesRead = file.gcount();
+        if (bytesRead == 0) {
+            cerr << "Failed to read data from file: " << superBlock.fileName << endl;
             file.close();
             return false;
-         }
-
-        file.seekg(0, ios::beg);
+        }
 
         proto::FileInfo info;
 
         //从文件流中解析
-        if(!info.ParseFromIstream(&file)) {
+        if(!info.ParseFromArray(buffer.data(),bytesRead)) {
             cerr << "Failed to parse file: " << superBlock.fileName << endl;
             file.close();
             return false;
@@ -310,6 +335,8 @@ private:
     vector<BlockIndexTable> blockIndexTable;
     //vector<mutex> lockQueue;
     map<int, size_t> keyBlockMap;
+
+    size_t serializedSize;
     
 };
 

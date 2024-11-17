@@ -144,14 +144,12 @@ public:
 
     //序列化到文件中
     void serialize(const string& filename, size_t offset) {
-        ofstream outFile(filename, ios::binary | ios::out );
+        fstream outFile(filename, ios::binary | ios::out | ios::in);
         if (!outFile.is_open()) {
             cerr << "Failed to open file for writing: " << filename << endl;
             return;
         }
 
-        // 将文件指针移动到指定的偏移量位置
-        outFile.seekp(offset, ios::beg);
 
         proto::Skiplist sl;
         Node* p = head; //将头结点序列化，便于后续建立头结点的next指针
@@ -165,20 +163,37 @@ public:
                 } else {
                     nodeProto->add_next(-2); // -1表示头指针，-2表示空指针
                 }
+             }
+                p = p->next[0];
             }
-            p = p->next[0];
-        }
 
-        if (!sl.SerializeToOstream(&outFile)) {
+        
+        serializedSize = sl.ByteSizeLong();
+
+        //将序列化数据写入文件
+        vector<char> buffer(serializedSize);
+        if (!sl.SerializeToArray(buffer.data(), serializedSize)) {
             cerr << "Failed to serialize data." << endl;
         }
 
+        // 将文件指针移动到指定的偏移量位置
+        outFile.seekp(offset, ios::beg);
+        outFile.write(reinterpret_cast<const char*>(&serializedSize), sizeof(size_t));
+
+        outFile.seekp(offset + sizeof(size_t), ios::beg);
+        outFile.write(buffer.data(), serializedSize);
+        // if (!sl.SerializeToOstream(&outFile)) {
+        //     cerr << "Failed to serialize data." << endl;
+        // }
+
         outFile.close();
+        //cout<< "ByteSizeLong:" <<sl.ByteSizeLong() << endl;
+        //slprint();
     }
 
     // 从文件中反序列化到跳表中
     size_t deserialize(const string& filename, size_t offset) {
-        ifstream inFile(filename, ios::binary | ios::in);
+        fstream inFile(filename, ios::binary | ios::in | ios::out);
         if (!inFile.is_open()) {
             cerr << "Failed to open file for reading: " << filename << endl;
             return 0;
@@ -186,12 +201,27 @@ public:
 
         // 将文件指针移动到指定的偏移量位置
         inFile.seekg(offset, ios::beg);
-
+        inFile.read(reinterpret_cast<char*>(&serializedSize), sizeof(size_t));
+        
+        inFile.seekg(offset + sizeof(size_t), ios::beg);
+        vector<char> buffer(serializedSize);
+        inFile.read(buffer.data(), serializedSize);
+        streamsize bytesRead = inFile.gcount();
+        if (bytesRead == 0) {
+            cerr << "Failed to read data from file: " << filename << endl;
+            inFile.close();
+            return 0;
+        }
        proto::Skiplist sl;
-        if (!sl.ParseFromIstream(&inFile)) {
+
+        if (!sl.ParseFromArray(buffer.data(), serializedSize)) {
             cerr << "Failed to parse file: " << filename << endl;
             return 0;
         }
+        // if (!sl.ParseFromIstream(&inFile)) {
+        //     cerr << "Failed to parse file: " << filename << endl;
+        //     return 0;
+        // }
 
         inFile.close();
 
@@ -235,13 +265,15 @@ public:
         //     }
            
         // }
+        slprint();
 
         return totalSize;
     }
 
 
 
-
+private:
+ size_t serializedSize;
 
 
 

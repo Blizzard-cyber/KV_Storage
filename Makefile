@@ -11,7 +11,7 @@ LDFLAGS = -lprotobuf
 TARGET = main
 
 # 源文件
-SRCS = main.cpp proto/info.pb.cc
+SRCS = main.cpp proto/info.pb.cc proto/sl.pb.cc
 
 
 
@@ -22,7 +22,7 @@ $(TARGET):
 
 # 测试
 test:
-	$(CXX) -std=c++11 -g -o test test.cpp proto/sl.pb.cc $(LDFLAGS)
+	$(CXX) -std=c++11 -g -o test test.cpp proto/info.pb.cc proto/sl.pb.cc $(LDFLAGS)
 # 清理生成的文件
 clean:
-	rm -f $(TARGET)  test dumpFile testFile
+	rm -f $(TARGET)  test  dumpFile

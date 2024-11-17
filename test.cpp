@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 #include "./include/skiplist.hpp"
-
+#include "./include/fileInfo.hpp"
 
 
 using namespace std;
@@ -11,20 +11,27 @@ using namespace std;
 
 
 int main() {
-    
-    Skiplist sl;
+    // Skiplist sl;
+    // for(int i = 0; i < 10; i++) {
+    //     sl.add(i, to_string(i));
+    // }
 
-    for(int i = 0; i < 10; i++){
-        sl.add(rand(), "test");
-    }
-    sl.slprint();
+    // sl.serialize("testFile", 1024*16);
+    // sl.slprint();
 
-    sl.serialize("testFile", 1024);
-    sl.deserialize("testFile", 1024);
+    // sl.deserialize("testFile", 1024*16);
+    // sl.slprint();
 
-    sl.slprint();
 
-    
+
+     FileInfo info("testFile");
+    // info.addKeyBlockMapping(1, 1);
+    // info.addKeyBlockMapping(2, 2);
+    // info.addKeyBlockMapping(3, 3);
+
+    // info.writeToBlock0();
+
+    info.readFromBlock0();
 
 
     return 0;
