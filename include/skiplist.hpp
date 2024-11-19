@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "../proto/sl.pb.h"
+#include "sl.pb.h"
 
 using namespace std;
 
@@ -65,19 +65,21 @@ public:
     }
     
     // 向跳表中插入元素 num,flag为1表示顺序插入（key已经有序）
-    size_t add(int num, string value, int flag = 0) {
+    size_t add(int num, string value) {
 
         auto node = new Node(num, value); // 创建要插入的新节点
         size_t nodeSize = sizeof(int) + value.capacity() + sizeof(Node*) * level; // 计算节点所占用的空间大小
         
 
-        if(!flag){
+        // if(!flag){
         vector<Node*> pre(level);
         find(num, pre); // 先找到每一层 i 小于目标值 target 的最大节点 pre[i]
 
             //如果存在相同的key，则更新value
             if(pre[0]->next[0] && pre[0]->next[0]->key == num){
+                nodeSize = value.capacity() - pre[0]->next[0]->value.capacity(); // 计算节点增加的空间大小
                 pre[0]->next[0]->value = value;
+                delete node;
                 return nodeSize;
             }
         
@@ -88,21 +90,21 @@ public:
             
             if (rand() %2) break; // 每一层有 50% 的概率不插入新节点
             }
-        }
-        else{
-            //顺序插入，key已经有序
+        // }
+        // else{
+        //     //顺序插入，key已经有序
             
-            for (int i = 0; i < level; i++) { 
-                //使用尾插法
+        //     for (int i = 0; i < level; i++) { 
+        //         //使用尾插法
                
-                node->next[i] = tail->next[i];
-                tail->next[i] = node;
+        //         node->next[i] = tail->next[i];
+        //         tail->next[i] = node;
 
-                //cout << rand() %2 << endl;
-                if (rand() %2) break; // 每一层有 50% 的概率不插入新节点
-            }
-             tail = node;
-        }
+        //         ////cout << rand() %2 << endl;
+        //         if (rand() %2) break; // 每一层有 50% 的概率不插入新节点
+        //     }
+        //      tail = node;
+        
         return nodeSize;
     }
     
@@ -132,12 +134,12 @@ public:
     void slprint(){
         for(int i = 0; i < level; i++){
             auto p = head; // 从头节点开始遍历每一层
-            cout << "level " << i << ": ";
+            //cout << "level " << i << ": ";
             while(p->next[i]){
-                cout << p->next[i]->key << " ";
+                //cout << p->next[i]->key << " ";
                 p = p->next[i];
             }
-            cout << endl;
+            //cout << endl;
         }
        
     }
@@ -187,7 +189,7 @@ public:
         // }
 
         outFile.close();
-        //cout<< "ByteSizeLong:" <<sl.ByteSizeLong() << endl;
+        ////cout<< "ByteSizeLong:" <<sl.ByteSizeLong() << endl;
         //slprint();
     }
 
@@ -258,13 +260,7 @@ public:
             }
         }
 
-        // //连接头结点
-        // if (!sl.nodes().empty()) {
-        //     for(int i = 0; i < level; i++){
-        //         head->next[i] = nodeMap[sl.nodes(0).key()];
-        //     }
-           
-        // }
+        
         slprint();
 
         return totalSize;
@@ -274,20 +270,6 @@ public:
 
 private:
  size_t serializedSize;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     //跳表序列化到文件中
     // void serialize(const string& filename, size_t offset){
@@ -324,11 +306,11 @@ private:
 
     //     size_t listSize = 0;
     //     while(getline(file_reader,line)){
-    //         cout << "line: " << line << endl;
+    //         //cout << "line: " << line << endl;
     //         //捕获stoi异常
     //         try {
     //             int key = stoi(line.substr(0, line.find(":")));
-    //             cout << "Key: " << key << endl;
+    //             //cout << "Key: " << key << endl;
 
     //             string value = line.substr(line.find(":")+1);
             
@@ -336,11 +318,11 @@ private:
     //             listSize += add(key,value,1);
     //         } 
     //         catch (const invalid_argument& e) {
-    //             cout << "line: " << line << endl;
+    //             //cout << "line: " << line << endl;
     //             cerr << "Invalid argument: " << e.what() << endl;
     //         } 
     //         catch (const out_of_range& e) {
-    //             cout << "line: " << line << endl;
+    //             //cout << "line: " << line << endl;
     //             cerr << "Out of range: " << e.what() << endl;
     //         }
     //         //int key = stoi(line.substr(0,line.find(":")));

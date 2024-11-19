@@ -1,0 +1,27 @@
+[
+{
+  "directory": "/home/admin000/NDSL/KVstorage/build",
+  "command": "/usr/bin/c++  -I/home/admin000/NDSL/KVstorage/include -I/home/admin000/NDSL/KVstorage/proto -g -std=gnu++20 -o CMakeFiles/main.dir/src/thread_pool.cpp.o -c /home/admin000/NDSL/KVstorage/src/thread_pool.cpp",
+  "file": "/home/admin000/NDSL/KVstorage/src/thread_pool.cpp"
+},
+{
+  "directory": "/home/admin000/NDSL/KVstorage/build",
+  "command": "/usr/bin/c++  -I/home/admin000/NDSL/KVstorage/include -I/home/admin000/NDSL/KVstorage/proto -g -std=gnu++20 -o CMakeFiles/main.dir/src/worker_thread.cpp.o -c /home/admin000/NDSL/KVstorage/src/worker_thread.cpp",
+  "file": "/home/admin000/NDSL/KVstorage/src/worker_thread.cpp"
+},
+{
+  "directory": "/home/admin000/NDSL/KVstorage/build",
+  "command": "/usr/bin/c++  -I/home/admin000/NDSL/KVstorage/include -I/home/admin000/NDSL/KVstorage/proto -g -std=gnu++20 -o CMakeFiles/main.dir/proto/info.pb.cc.o -c /home/admin000/NDSL/KVstorage/proto/info.pb.cc",
+  "file": "/home/admin000/NDSL/KVstorage/proto/info.pb.cc"
+},
+{
+  "directory": "/home/admin000/NDSL/KVstorage/build",
+  "command": "/usr/bin/c++  -I/home/admin000/NDSL/KVstorage/include -I/home/admin000/NDSL/KVstorage/proto -g -std=gnu++20 -o CMakeFiles/main.dir/proto/sl.pb.cc.o -c /home/admin000/NDSL/KVstorage/proto/sl.pb.cc",
+  "file": "/home/admin000/NDSL/KVstorage/proto/sl.pb.cc"
+},
+{
+  "directory": "/home/admin000/NDSL/KVstorage/build",
+  "command": "/usr/bin/c++  -I/home/admin000/NDSL/KVstorage/include -I/home/admin000/NDSL/KVstorage/proto -g -std=gnu++20 -o CMakeFiles/main.dir/main.cpp.o -c /home/admin000/NDSL/KVstorage/main.cpp",
+  "file": "/home/admin000/NDSL/KVstorage/main.cpp"
+}
+]

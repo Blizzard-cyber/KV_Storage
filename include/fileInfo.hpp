@@ -5,8 +5,8 @@
 #include <ctime>
 #include <fstream> 
 
-#include "../proto/info.pb.h"
-
+#include "info.pb.h"
+#include "global.h"
 //#include <mutex>
 using namespace std;
 
@@ -15,9 +15,9 @@ using namespace std;
 // const size_t NUM_BLOCKS = FILE_SIZE / BLOCK_SIZE;
 
 //test
-const size_t BLOCK_SIZE = 4 * 1024 ; // 4kB
-const size_t FILE_SIZE = 64 * 1024; // 64kB
-const size_t NUM_BLOCKS = FILE_SIZE / BLOCK_SIZE;
+// const size_t BLOCK_SIZE = 4 * 1024 ; // 4kB
+// const size_t FILE_SIZE = 64 * 1024; // 64kB
+// const size_t NUM_BLOCKS = FILE_SIZE / BLOCK_SIZE;
 
 
 struct SuperBlock {
@@ -71,19 +71,19 @@ public:
     void addKeyBlockMapping(int key, size_t blockNumber) {
         //lock_guard<mutex> lock(mutex);
         if(keyBlockMap.find(key) != keyBlockMap.end()) {
-            cout << "Key already exists! update key: "<<key<<" to block:"<<blockNumber << endl;
+            //cout << "Key already exists! update key: "<<key<<" to block:"<<blockNumber << endl;
             return;
         }
         keyBlockMap[key] = blockNumber;
         blockIndexTable[0].freeSpace -= (sizeof(int) + sizeof(size_t));
-        //cout << "Add key: " << key << " to block: " << blockNumber << endl;
+        ////cout << "Add key: " << key << " to block: " << blockNumber << endl;
     }
 
     //获取key和block的映射
     size_t getBlockNumber(int key) {
         //lock_guard<mutex> lock(mutex);
         if(keyBlockMap.find(key) == keyBlockMap.end()) {
-            cout << "Key not found!" << endl;
+            //cout << "Key not found in KeyBlockMap!" << endl;
             return -1;
         }
         return keyBlockMap[key];
@@ -93,7 +93,7 @@ public:
     size_t delKeyBlockMapping(int key) {
         //lock_guard<mutex> lock(mutex);
         if(keyBlockMap.find(key) == keyBlockMap.end()) {
-            cout << "Key not found!" << endl;
+            //cout << "Key not found!" << endl;
             return -1;
         }
         //将块号返回
@@ -112,10 +112,10 @@ public:
             if(blockUsageTable[i] == false) {
                 blockUsageTable[i] = true;
                 return i;
-                cout << "Free block: " << i << endl;
+                //cout << "Free block: " << i << endl;
             }
         }
-        cout << "No free block!" << endl;
+        //cout << "No free block!" << endl;
         return -1;
     }
 
@@ -124,7 +124,7 @@ public:
     BlockIndexTable getBlockInfo(size_t blockNumber) {
         //lock_guard<mutex> lock(mutex);
         if(blockNumber >= NUM_BLOCKS) {
-            cout << "Block number out of range!" << endl;
+            //cout << "Block number out of range!" << endl;
             return blockIndexTable[0];
         }
         return blockIndexTable[blockNumber];
@@ -134,7 +134,7 @@ public:
     void updateBlockInfo(size_t blockNumber, size_t freeSpace) {
         //lock_guard<mutex> lock(mutex);
         if(blockNumber >= NUM_BLOCKS) {
-            cout << "Block number out of range!" << endl;
+            //cout << "Block number out of range!" << endl;
             return;
         }
         blockIndexTable[blockNumber].freeSpace = freeSpace;
@@ -168,10 +168,10 @@ public:
         }
 
         cout << "Key Block Map: " << endl;
-        cout << "------------------------------" << endl;
+        //cout << "------------------------------" << endl;
         for(auto it = keyBlockMap.begin(); it != keyBlockMap.end(); it++) {
-            cout << "Key: " << it->first << " ->";
-            cout << "Block: " << it->second << endl;
+            //cout << "Key: " << it->first << " ->";
+            //cout << "Block: " << it->second << endl;
         }
     }
 
@@ -190,7 +190,7 @@ public:
         //lock_guard<mutex> lock(mutex);
         fstream file(superBlock.fileName, ios::out | ios::binary | ios::in);
         if(!file.is_open()) {
-            cout << "Failed to open file: " << superBlock.fileName << endl;
+            //cout << "Failed to open file: " << superBlock.fileName << endl;
             file.close();
             return;
         }
@@ -239,7 +239,7 @@ public:
             cerr << "Serialized data size exceeds the maximum allowed size." << endl;
             return;
         }
-        cout<<"[WirteBlock0] Info SIze :"<< serializedSize <<endl;
+        //cout<<"[WirteBlock0] Info SIze :"<< serializedSize <<endl;
 
         
         // 序列化数据到字节数组
@@ -264,7 +264,7 @@ public:
         //lock_guard<mutex> lock(mutex);
         ifstream file(superBlock.fileName, ios::in | ios::binary);
         if(!file.is_open()) {
-            cout << "Failed to open file: " << superBlock.fileName << endl;
+            //cout << "Failed to open file: " << superBlock.fileName << endl;
             file.close();
             return false;
         }
@@ -274,7 +274,7 @@ public:
         file.read(reinterpret_cast<char*>(&serializedSize), sizeof(size_t));
 
         file.seekg(sizeof(size_t), ios::beg);
-        vector<char> buffer(serializedSize);
+        vector<char> buffer(serializedSize, 0);  //初始化
         file.read(buffer.data(), serializedSize);
         streamsize bytesRead = file.gcount();
         if (bytesRead == 0) {
@@ -305,7 +305,7 @@ public:
         //blockUsageTable
         for(int i = 0; i < info.blockusagetable_size(); i++) {
             blockUsageTable[i] = info.blockusagetable(i);
-            //cout << info.blockusagetable(i) << " ";
+            ////cout << info.blockusagetable(i) << " ";
         }
 
         //blockIndexTable

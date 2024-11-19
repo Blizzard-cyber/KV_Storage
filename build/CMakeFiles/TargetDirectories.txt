@@ -1,0 +1,3 @@
+/home/admin000/NDSL/KVstorage/build/CMakeFiles/main.dir
+/home/admin000/NDSL/KVstorage/build/CMakeFiles/edit_cache.dir
+/home/admin000/NDSL/KVstorage/build/CMakeFiles/rebuild_cache.dir

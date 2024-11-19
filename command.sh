@@ -17,7 +17,7 @@ generate_random_string() {
 generate_random_command() {
     local commands=("PUT" "GET" "DEL")
     local command=${commands[$RANDOM % ${#commands[@]}]}
-    local key=$((RANDOM % 100)) # 随机生成一个0到99999之间的键
+    local key=$((RANDOM % 100000)) # 随机生成一个0到99999之间的键
     local value=$(generate_random_string) # 生成不定长的字符串
 
     case $command in
@@ -34,5 +34,5 @@ generate_random_command() {
 while true; do
     INPUT=$(generate_random_command)
     echo "$INPUT"
-    sleep 0.1 # 模拟用户输入的间隔时间
+    
 done | $EXECUTABLE
