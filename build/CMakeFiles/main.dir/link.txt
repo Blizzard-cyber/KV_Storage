@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/main.dir/src/thread_pool.cpp.o CMakeFiles/main.dir/src/worker_thread.cpp.o CMakeFiles/main.dir/proto/info.pb.cc.o CMakeFiles/main.dir/proto/sl.pb.cc.o CMakeFiles/main.dir/main.cpp.o -o ../main  -Wl,-rpath,/usr/local/lib /usr/local/lib/libprotobuf.so -lpthread 
