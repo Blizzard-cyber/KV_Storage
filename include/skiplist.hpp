@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SKIPLIST_HPP
+#define SKIPLIST_HPP
 
 #include <vector>
 #include <stdlib.h>
@@ -337,3 +338,4 @@ private:
     // }
 };
     
+#endif // SKIPLIST_HPP

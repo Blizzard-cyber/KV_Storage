@@ -1,3 +1,6 @@
+#ifndef FILEINFO_HPP
+#define FILEINFO_HPP
+
 #include <iostream>
 #include <map>
 #include <vector>
@@ -10,14 +13,7 @@
 //#include <mutex>
 using namespace std;
 
-// const size_t BLOCK_SIZE = 64 * 1024 * 1024; // 64MB
-// const size_t FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1GB
-// const size_t NUM_BLOCKS = FILE_SIZE / BLOCK_SIZE;
 
-//test
-// const size_t BLOCK_SIZE = 4 * 1024 ; // 4kB
-// const size_t FILE_SIZE = 64 * 1024; // 64kB
-// const size_t NUM_BLOCKS = FILE_SIZE / BLOCK_SIZE;
 
 
 struct SuperBlock {
@@ -176,14 +172,14 @@ public:
     }
 
 
-    void testset() {
-        //lock_guard<mutex> lock(mutex);
-        addKeyBlockMapping(1, 1);
-        addKeyBlockMapping(2, 2);
-        addKeyBlockMapping(3, 3);
-        getFreeBlock();
+    // void testset() {
+    //     //lock_guard<mutex> lock(mutex);
+    //     addKeyBlockMapping(1, 1);
+    //     addKeyBlockMapping(2, 2);
+    //     addKeyBlockMapping(3, 3);
+    //     getFreeBlock();
         
-    }
+    // }
 
     //将数据写入到磁盘文件的第一块中
     void writeToBlock0() {
@@ -340,3 +336,4 @@ private:
     
 };
 
+#endif // FILEINFO_HPP

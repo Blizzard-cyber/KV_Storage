@@ -1,3 +1,6 @@
+#ifndef CACHE_HPP
+#define CACHE_HPP
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -5,19 +8,20 @@
 #include <fstream>
 #include <shared_mutex>
 #include "skiplist.hpp" 
-
+#include "IOpool.hpp"
 #include "global.h"
 using namespace std;
-//const size_t CACHE_SIZE = 64 * 1024 * 1024; // 64MB
 
-//test
-//const size_t CACHE_SIZE = 4 * 1024 ; // 4kB
 
 
 //读写缓冲类
 class Cache {
 public:
-    Cache(string filename) {
+
+    size_t currentSize;
+    IOThreadPool& ioPool;
+    
+    Cache(string filename, IOThreadPool& ioPool) : ioPool(ioPool) {
         currentSize = 0;
         FILENAME = filename;
     }
@@ -33,7 +37,15 @@ public:
        
         if (currentSize > CACHE_SIZE ) {
             size_t freeSpace = (CACHE_SIZE - currentSize + nodesize);
-            flushToDisk(fileInfo, FILENAME,freeSpace);  // 缓冲区满了，将数据写入磁盘
+            size_t freeBlock = fileInfo.getFreeBlock();
+            //lock.unlock(); // 释放当前写缓冲的锁
+
+            // 提交 flushToDisk 任务到 I/O 线程池，并传递写锁
+            auto lockPtr = make_shared<unique_lock<shared_mutex>>(move(lock));
+            ioPool.submit(freeBlock-1, [this, &fileInfo, freeSpace, freeBlock, lockPtr] {
+                flushToDisk(fileInfo, FILENAME, freeSpace, freeBlock); // 交由IOpool的线程接管
+            });
+            
         }
         
        
@@ -52,8 +64,14 @@ public:
                 else{   //读缓冲中没有该块
                     unique_lock<shared_mutex> lock(RDmutex); // 独占锁，只有当不存在get和del时才能获取到
                     currentReadBlock = blockNumber;
-                    loadFromDisk(fileInfo, FILENAME,blockNumber);
-                    return RWcache.search(key); // 从SkipList中查找键值对
+                    lock.unlock(); // 解锁并当前线程执行结束
+
+                    ioPool.submit(blockNumber-1, [this, &fileInfo, blockNumber, key] {
+                        loadFromDisk(fileInfo, FILENAME, blockNumber);
+                        shared_lock<shared_mutex> readLock(RDmutex); // 读取锁
+                        return RWcache.search(key); // 从SkipList中查找键值对
+                    });
+                    return ""; // 返回空字符串，实际结果由IO线程池的线程返回
                 }
             }
             else{
@@ -84,7 +102,16 @@ public:
                 unique_lock<shared_mutex> lock(RDmutex); // 对读缓冲区加锁，获得进入读缓冲区的条件
                 if(blockNumber != currentReadBlock){  //读缓冲中没有该块
                     currentReadBlock = blockNumber;
-                    loadFromDisk(fileInfo, FILENAME,blockNumber);
+                    lock.unlock(); // 释放当前读缓冲的锁
+                   // 提交 I/O 任务到 I/O 线程池
+                    ioPool.submit(blockNumber-1, [this, &fileInfo, blockNumber, key,flag] {
+                        loadFromDisk(fileInfo, FILENAME, blockNumber);
+                        unique_lock<shared_mutex> writeLock(RDmutex);
+                        delhander(key,flag,fileInfo,blockNumber);
+                    });
+
+                    // loadFromDisk(fileInfo, FILENAME,blockNumber);
+                    // delhander(key,flag,fileInfo,blockNumber);
                 }
                 delhander(key,flag,fileInfo,blockNumber);               
             }
@@ -118,24 +145,10 @@ public:
          }
     }
 
-    
-
-    
-
-private:
-
-    Skiplist RWcache;
-    size_t currentSize;
-    string FILENAME;
-    shared_mutex WRmutex; //写缓冲的共享互斥锁，put为写，get为读,del为写
-    shared_mutex RDmutex; //读缓冲的共享互斥锁,get为读，del为写
-    size_t currentReadBlock = -1; // 当前读缓冲的块号
-    
-
-    //写磁盘
-    bool  flushToDisk(FileInfo& fileInfo, const string& filename,size_t freeSpace) {
+     //写磁盘
+    bool  flushToDisk(FileInfo& fileInfo, const string& filename,size_t freeSpace,size_t freeBlock) {
        
-        size_t freeBlock=fileInfo.getFreeBlock();
+        //size_t freeBlock=fileInfo.getFreeBlock();
         if(freeBlock==-1){
             //cout<<"[WRcache] No free block to write!"<<endl;
             return false;
@@ -160,7 +173,7 @@ private:
         fileInfo.updateBlockInfo(freeBlock, freeSpace);
 
         //打印文件信息
-        fileInfo.printInfo();
+        //fileInfo.printInfo();
 
         //清空缓冲区
         RWcache.~Skiplist();
@@ -188,19 +201,24 @@ private:
 
         
     }
+
+    
+
+private:
+
+    Skiplist RWcache;
+    //size_t currentSize;
+    string FILENAME;
+    shared_mutex WRmutex; //写缓冲的共享互斥锁，put为写，get为读,del为写
+    shared_mutex RDmutex; //读缓冲的共享互斥锁,get为读，del为写
+    size_t currentReadBlock = -1; // 当前读缓冲的块号
+    
+
+   
     
 };
 
 
 
-// int main() {
-//     WriteCache writeCache;
-//     ReadCache readCache;
 
-//     writeCache.put("key1", "value1");
-//     string value = readCache.get("key1");
-
-//     //cout << "Read value: " << value << endl;
-
-//     return 0;
-// }
+#endif // CACHE_HPP
