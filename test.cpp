@@ -1,38 +1,33 @@
 #include <iostream>
-#include <string>
-#include <map>
-#include <vector>
-#include "./include/skiplist.hpp"
-#include "./include/fileInfo.hpp"
-
+#include <csignal>
+#include <mutex>
+#include <condition_variable>
 
 using namespace std;
 
+mutex cv_m;
+condition_variable cv;
+bool ready = false;
+
+//信号处理函数
+void signalHandler(int signum) {
+    cout << "Interrupt signal (" << signum << ") received." << endl;
+    sleep(5);
+    lock_guard<mutex> lk(cv_m);
+    ready = true;
+    cv.notify_all();
+    cout << "Signal handler done." << endl;
+}
 
 
 int main() {
-    // Skiplist sl;
-    // for(int i = 0; i < 10; i++) {
-    //     sl.add(i, to_string(i));
-    // }
-
-    // sl.serialize("testFile", 1024*16);
-    // sl.slprint();
-
-    // sl.deserialize("testFile", 1024*16);
-    // sl.slprint();
+  //捕获中端信号
+    signal(SIGINT, signalHandler);
 
 
-
-     FileInfo info("testFile");
-    // info.addKeyBlockMapping(1, 1);
-    // info.addKeyBlockMapping(2, 2);
-    // info.addKeyBlockMapping(3, 3);
-
-    // info.writeToBlock0();
-
-    info.readFromBlock0();
-
-
+    unique_lock<mutex> lk(cv_m);
+    cv.wait(lk, []{ return ready; });
+    
+    cout << "Main thread is done." << endl;
     return 0;
 }

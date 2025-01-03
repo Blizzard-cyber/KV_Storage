@@ -164,11 +164,12 @@ public:
         }
 
         cout << "Key Block Map: " << endl;
+        cout << endl;
         //cout << "------------------------------" << endl;
-        for(auto it = keyBlockMap.begin(); it != keyBlockMap.end(); it++) {
-            //cout << "Key: " << it->first << " ->";
-            //cout << "Block: " << it->second << endl;
-        }
+        // for(auto it = keyBlockMap.begin(); it != keyBlockMap.end(); it++) {
+        //     cout << "Key: " << it->first << " ->";
+        //     cout << "Block: " << it->second << endl;
+        // }
     }
 
 

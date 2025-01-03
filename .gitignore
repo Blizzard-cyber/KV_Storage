@@ -1,5 +1,6 @@
 .vscode/
 build/
-main
+server
+client
 dumpFile
 test

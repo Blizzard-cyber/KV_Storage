@@ -3,6 +3,13 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+// 服务器IP
+const std::string SERVER_IP =  "127.0.0.1";   // 本地回环地址
+// 服务器端口
+const int SERVER_PORT = 12345;
+// 服务器监听队列长度
+const int SERVER_LISTEN_QUEUE = 3;
+
 // 文件名
 const std::string FILE_PATH = "dumpFile";
 // 文件大小（以字节为单位）

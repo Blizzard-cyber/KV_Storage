@@ -23,18 +23,19 @@ set(SOURCES
     src/worker_thread.cpp 
     proto/info.pb.cc 
     proto/sl.pb.cc 
-    main.cpp)
+    server.cpp)
 
 
 # 生成可执行文件
-add_executable(main ${SOURCES})
+add_executable(server ${SOURCES})
+add_executable(client client.cpp)
 
 # 链接所需的库
 find_package(Protobuf REQUIRED)
-target_link_libraries(main PRIVATE ${Protobuf_LIBRARIES} pthread)
+target_link_libraries(server PRIVATE ${Protobuf_LIBRARIES} pthread)
 
 # 设置输出目录
-set_target_properties(main PROPERTIES
+set_target_properties(server client PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
